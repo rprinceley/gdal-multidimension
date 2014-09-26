@@ -3,7 +3,10 @@
 We adopted the metadata format used by GDAL's NetCDF driver for all multi-dimensional data. This structure describes multidimensional data for ArcGIS. NetCDF, HDF4, HDF5 and GRIB drivers were modified to construct and return MULTIDIMENSION metadata string.
 
 ### Format:
-MULTIDIMENSION is standard `name`=`value` pairs with support for attributes. Attribute entries are constructed by concatenation - `name` + `#` + `attribute`.
+* MULTIDIMENSION is standard name/value string list.
+* Attribute entries are constructed by concatenation - `name` + `#` + `attribute`.
+* Arrays are stored comma delimeted in curly braces `{0, ..., n}`.
+* Variable and dimension names are expected to be clean alphanumeric strings (non-printable/Unicode not supported).
 
 ###### E.g.:
 	air_temp#accum_type=instantaneous
@@ -16,20 +19,35 @@ MULTIDIMENSION is standard `name`=`value` pairs with support for attributes. Att
 	MD_BLACKLIST={time,lat,lon,lvl,Ak,Bk,base_date,base_time,valid_date,valid_time,forc_hrs,wrtn_date,wrtn_time}
 	MD_VARIABLES={seg_type,zonal_wnd,merid_wnd,air_temp,spec_hum,vertical_wnd,pressure,geop_ht,dewpt,relhum,clwc,ciwc}
 
-
 ### Required:
-* `MD_VARIABLES` - list of variables in dataset.
-* `variable#MD_DIMS` - list of dimensions in `variable`
-* `variable#MD_DIM_dimension_DEF` - array that defines size and type of dimension - {size, type}; type is based on netCDF's datatype enum.
+* `MD_VARIABLES` - array of variables in dataset.
+* `variable#MD_DIMS` - array of dimensions in `variable`
+* `variable#MD_DIM_dimension_DEF` - array that defines size and type of `dimension` - {size,type}; type is based on netCDF's datatype enum.
 * `variable#MD_DIM_dimension_VALUES` - array of dimension values
 
-### Common attributes:
-* `#units` - variable/dimension units (data specific string)
+### Common entries:
+* `MD_BLACKLIST` - list of variables that are black listed, these are not accessable.
+* `#units` - variable/dimension units (data specific)
 * `#description` - long description
 
-Format specific entries include CF attributes in NetCDF (short_name, standard_name, etc.) and GRIB codes/attributes (center, code, etc.).
+Format specific entries include CF metadata in NetCDF, GRIB codes, HDF attributes, etc.
 
-### Examples:
+### Driver details:
+#### HDF4:
+* HDF attributes are added to metadata entries.
+* Vdata is not processed, plan is to return some 2D data as JSON string (e.g. tables in EOS products).
+
+##### Generic SDS:
+* 2D+ datasets are returned are variables using HDF path names.
+
+##### EOS-HDF2:
+* 2D+ fields in a GRID/SWATH layers are returned as variables.
+* 
+
+#### HDF5:
+
+#### GRIB:
+###### Example:
     Metadata (multidimension):
         DBLY#description=DBLY (layer between 2 depths below land surface)
         DBLY#units=cm
@@ -53,3 +71,6 @@ Format specific entries include CF attributes in NetCDF (short_name, standard_na
         SOILM@DBLY#units=kg/m^2
         time#time_origin=1009843200
         time#units=seconds since origin
+
+#### NetCDF
+
